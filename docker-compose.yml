@@ -1,0 +1,64 @@
+# project/
+# ├─ backend/
+# │  ├─ Dockerfile
+# │  └─ ... (Node.js app files)
+# ├─ frontend/
+# │  ├─ Dockerfile
+# │  └─ ... (React app files)
+# └─ docker-compose.yml
+
+version: "3.9"
+
+services:
+  # Postgres Database
+  db:
+    image: postgres:15             # Official Postgres image
+    container_name: db             
+    environment:                
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:                        
+      - "5432:5432"
+    volumes:                       
+      - db_data:/var/lib/postgresql/data
+    networks:                      
+      - my-network
+
+  # Node.js Backend
+  backend:
+    build: ./backend               
+    container_name: backend
+    depends_on:                    
+      - db
+    environment:              
+      DB_HOST: db
+      DB_USER: myuser
+      DB_PASS: mypassword
+      DB_NAME: mydb
+    ports:                         
+      - "5000:5000"
+    networks:
+      - my-network
+
+  # React Frontend
+  frontend:
+    build: ./frontend             
+    container_name: frontend
+    depends_on:                   
+      - backend
+    environment:                   # Must: tell frontend where backend is
+      REACT_APP_API_URL: http://backend:5000
+    ports:                         
+      - "3000:3000"
+    networks:
+      - my-network
+
+# Networks
+networks:
+  my-network:                   
+    driver: bridge
+
+# Volumes
+volumes:
+  db_data:      
